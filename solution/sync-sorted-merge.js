@@ -13,43 +13,39 @@ qqsort(data, function(a,b) { return a.a - b.a }, function(err) {
 // "print the sorted merge of all LogEntries across `n` LogSources."
 module.exports = (logSources, printer) => {
 	//We have logSource and within there each is sorted
+	//   BUT you do know that the entries within each source are sorted chronologically (that last bit is important).
 
-	//BUT you do know that the entries within each source are sorted chronologically (that last bit is important).
-
-	//how many logSources are there.
-	console.log(` --> there are ${logSources.length} sources`);
-	  
-  qqsort(logSources, cmp2, function( er ) {
-  	if(er) {
-  		console.error(er);
-  	} else {
-  		//At this point logSources is Sorted.
-  		doneSorting();
-  	}
+  // HOWEVER, we still must merge the different log entries prior to output.
+  
+  const logEntries = [];
+  
+  //console.log(logSources);
+  console.log('=================================================================');
+  let i = 0;
+  logSources.forEach( logSource => {
+    let logEntry = logSource.pop(); //Returned in order
+    do {
+      //{ date: <date>, msg: <str> }
+      logEntries.push(logEntry);
+      i++;
+    } while( logEntry = logSource.pop() );
+    console.log(`${i} ----------------------------------------------------------`);
+  } );
+  
+  console.log(`${i} - starting sort and output`);
+  qqsort(logEntries, cmp3, (er) => {
+    logEntries.forEach( sortedEntry => {
+      printer.print(sortedEntry);
+    } );
+    console.log(`${logEntries.length} log entries processed`);
   });
-	
-	function doneSorting() {
-		console.log(logSources);
-		console.log('=================================================================');
-		let i = 0;
-		logSources.forEach( logSource => {
-			let logEntry = logSource.pop(); //Returned in order
-			do {
-				//{ date: <date>, msg: <str> }
-				printer.print(logEntry);
-				i++;
-			} while( logEntry = logSource.pop() );
-			console.log(`${i} ----------------------------------------------------------`);
-		} );
-  }
-	//console.log( logSources.pop() );
-
-	// [ {}, {} ]
-	// Sorts in place
-	
 }
 
 function cmp2(l1, l2) {
 	const e1 = l1.last.date, e2 = l2.last.date;
-	return (e1 > e2) ? -1 : (e1 > e2) ? 1 : 0
+	return (e1 < e2) ? -1 : (e1 > e2) ? 1 : 0
+}
+function cmp3(l1,l2) {
+  const e1 = l1.date, e2 = l2.date;
+  return (e1 < e2) ? -1 : (e1 > e2) ? 1 : 0
 }
