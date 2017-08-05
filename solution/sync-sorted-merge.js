@@ -18,39 +18,38 @@ module.exports = (logSources, printer) => {
 
 	//how many logSources are there.
 	console.log(` --> there are ${logSources.length} sources`);
-
-
-
-	console.log(logSources);
-	console.log('=================================================================');
-	let i = 0;
-	logSources.forEach( logSource => {
-		let logEntry = logSource.pop(); //Returned in order
-		do {
-			//{ date: <date>, msg: <str> }
-			printer.print(logEntry);
-			i++;
-		} while( logEntry = logSource.pop() );
-		console.log(`${i} ----------------------------------------------------------`);
-	} );
-
+	  
+  qqsort(logSources, cmp2, function( er ) {
+  	if(er) {
+  		console.error(er);
+  	} else {
+  		//At this point logSources is Sorted.
+  		doneSorting();
+  	}
+  });
+	
+	function doneSorting() {
+		console.log(logSources);
+		console.log('=================================================================');
+		let i = 0;
+		logSources.forEach( logSource => {
+			let logEntry = logSource.pop(); //Returned in order
+			do {
+				//{ date: <date>, msg: <str> }
+				printer.print(logEntry);
+				i++;
+			} while( logEntry = logSource.pop() );
+			console.log(`${i} ----------------------------------------------------------`);
+		} );
+  }
 	//console.log( logSources.pop() );
 
 	// [ {}, {} ]
 	// Sorts in place
-	// qqsort(logSources, cmp2, function( er ) {
-	// 	if(er) {
-	// 		console.error(er);
-	// 	} else {
-	// 		//At this point it (seems) sorted.
-	// 		logSources.forEach( logs => {
-	// 			printer.print(logs.last);
-	// 		} );
-	// 	}
-	// });
+	
 }
 
 function cmp2(l1, l2) {
 	const e1 = l1.last.date, e2 = l2.last.date;
-	return (e1 < e2) ? -1 : (e1 > e2) ? 1 : 0
+	return (e1 > e2) ? -1 : (e1 > e2) ? 1 : 0
 }
