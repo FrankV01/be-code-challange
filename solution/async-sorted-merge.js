@@ -1,26 +1,50 @@
 'use strict'
 
 const Promise = require('bluebird');
+Promise.longStackTraces();
+Promise.config({
+  // Enable warnings
+  warnings: true,
+  // Enable long stack traces
+  longStackTraces: true,
+  // Enable cancellation
+  cancellation: true,
+  // Enable monitoring
+  monitoring: true
+});
+
 const qqsort = require('qqsort');
 
 module.exports = (logSources, printer) => {
   
-  new Promise((res, rej) => {
-    gatherAllLogEntries(logSources, res, rej)
+  return new Promise((res, rej) => {
+    gatherAllLogEntries(logSources, res, rej);
+  })
+  .then(allEnries => {
+    const filteredAr = [];
+    allEnries.forEach(itm => {
+      if(itm !== false)
+        filteredAr.push(itm);
+    });
+    console.log(` --> filteredAr.length = ${filteredAr.length}`);
+    return filteredAr;
   })
   .then(allEntries => {
-    console.log(allEntries)
+    console.log(` --> allEntries.length = ${allEntries.length}`);
+    //sort them and print them?
+    qqsort(allEntries, cmp3, er => {
+      allEntries.forEach( sortedEntry => {
+        printer.print(sortedEntry);
+      });
+      console.log('--> We should be done.');
+    });
+    return true;
   })
   .catch(er => console.error("Error from gatherAllLogEntries", er));
-  
-}
+};
 
 // -> promise with all flattened log entries.
 let logEntries = [];
-
-// function collect( rslt ) {
-//   logEntries.concat(rslt);
-// }
 
 function allDone( results ) {
   //We're done if all are false.
@@ -32,12 +56,17 @@ function allDone( results ) {
   return true;
 }
 
+function commonErrorReporter(er) {
+  console.log('[commonErrorReporter] -> ', er);
+  throw er;
+}
+
 function gatherAllLogEntries( logSources, outerResolve, outerReject ) {
   
   const srcPromise = [];
   
   logSources.forEach((src) => {
-    srcPromise.push( src.popAsync() );
+    srcPromise.push( src.popAsync().catch(commonErrorReporter) );
   });
   
   //Wait for all to resolve.
@@ -51,19 +80,13 @@ function gatherAllLogEntries( logSources, outerResolve, outerReject ) {
         logEntries = logEntries.concat(rslt);
       }
     })
-    .catch( (er) => { outerReject(er); } );
+    .catch((er) => {
+      console.error("error during gatherAllLogEntries [1]", er);
+      outerReject(er);
+    });
 }
-
-
 
 function cmp3(l1,l2) {
   const e1 = l1.date, e2 = l2.date;
   return (e1 < e2) ? -1 : (e1 > e2) ? 1 : 0
 }
-
-
-/*
-alternativly we can do some sort of accumlating alls where each promise ends in a then with the result and the item.
-.then( logEntry => { entry: logEntry, logSource: logSource } ) -> then on every all, if we're not all false, do the next "batch>
-Batch over and over like that until all resolve to false.
- */
