@@ -16,6 +16,8 @@ Promise.config({
 const qqsort = require('qqsort');
 
 module.exports = (logSources, printer) => {
+  console.log('--> ==================================================');
+  console.log('--> starting async-sorted-merge');
   
   return new Promise((res, rej) => {
     gatherAllLogEntries(logSources, res, rej);
