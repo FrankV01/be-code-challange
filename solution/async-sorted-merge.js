@@ -5,12 +5,13 @@ const qqsort = require('qqsort');
 
 module.exports = (logSources, printer) => {
   
-  
-  gatherAllLogEntries(logSources)
-    .then(allEntries => {
-      console.log(allEntries)
-    })
-    .catch(er => console.error("Error from gatherAllLogEntries", er));
+  new Promise((res, rej) => {
+    gatherAllLogEntries(logSources, res, rej)
+  })
+  .then(allEntries => {
+    console.log(allEntries)
+  })
+  .catch(er => console.error("Error from gatherAllLogEntries", er));
   
 }
 
@@ -31,28 +32,26 @@ function allDone( results ) {
   return true;
 }
 
-function gatherAllLogEntries( logSources ) {
+function gatherAllLogEntries( logSources, outerResolve, outerReject ) {
   
-  return new Promise((res, rej) => {
-    const srcPromise = [];
+  const srcPromise = [];
   
-    logSources.forEach((src) => {
-      srcPromise.push( src.popAsync() );
-    });
-  
-    //Wait for all to resolve.
-    Promise.all( srcPromise )
-      .then((rslt) => {
-        //if all rslt indicates done...
-        if( allDone(rslt) ) {
-          res(logEntries);
-        } else {
-          gatherAllLogEntries(logSources);
-          logEntries = logEntries.concat(rslt);
-        }
-      })
-      .catch( (er) => { rej(er); } );
+  logSources.forEach((src) => {
+    srcPromise.push( src.popAsync() );
   });
+  
+  //Wait for all to resolve.
+  Promise.all( srcPromise )
+    .then((rslt) => {
+      //if all rslt indicates done...
+      if( allDone(rslt) ) {
+        outerResolve(logEntries);
+      } else {
+        gatherAllLogEntries(logSources, outerResolve, outerReject);
+        logEntries = logEntries.concat(rslt);
+      }
+    })
+    .catch( (er) => { outerReject(er); } );
 }
 
 
