@@ -70,14 +70,15 @@ function gatherAllLogEntries( logSources, outerResolve, outerReject ) {
   });
   
   //Wait for all to resolve.
-  Promise.all( srcPromise )
+  return Promise.all( srcPromise )
     .then((rslt) => {
       //if all rslt indicates done...
       if( allDone(rslt) ) {
         outerResolve(logEntries);
       } else {
-        gatherAllLogEntries(logSources, outerResolve, outerReject);
+        const p = gatherAllLogEntries(logSources, outerResolve, outerReject);
         logEntries = logEntries.concat(rslt);
+        return p;
       }
     })
     .catch((er) => {
