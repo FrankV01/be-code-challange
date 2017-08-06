@@ -1,5 +1,5 @@
 {
-  "name": "interviews",
+  "name": "be-coding-challange",
   "version": "0.1.0",
   "description": "BC Coding Challenge",
   "main": "index.js",
@@ -9,14 +9,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/BuildingConnected/interviews.git"
+    "url": "https://github.com/FrankV01/be-code-challange.git"
   },
   "author": "",
   "license": "BSD-2-Clause",
   "bugs": {
-    "url": "https://github.com/BuildingConnected/interviews/issues"
+    "url": ""
   },
-  "homepage": "https://github.com/BuildingConnected/interviews",
+  "homepage": "http://theOpenSourceU.org",
   "dependencies": {
     "Faker": "~0.7.0",
     "bluebird": "^3.4.1",
