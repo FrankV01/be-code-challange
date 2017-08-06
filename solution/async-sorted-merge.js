@@ -2,16 +2,6 @@
 
 const Promise = require('bluebird');
 Promise.longStackTraces();
-Promise.config({
-  // Enable warnings
-  warnings: true,
-  // Enable long stack traces
-  longStackTraces: true,
-  // Enable cancellation
-  cancellation: true,
-  // Enable monitoring
-  monitoring: true
-});
 
 const qqsort = require('qqsort');
 

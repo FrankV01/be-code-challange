@@ -24,12 +24,13 @@ module.exports = (logSources, printer) => {
     } while( logEntry = logSource.pop() );
   } );
   
+  // This doesn't block making this sync more async than desired.
   console.log(`${i} - starting sort and output`);
   qqsort(logEntries, cmp3, (er) => {
     logEntries.forEach( sortedEntry => {
       printer.print(sortedEntry);
     } );
-    console.log(`${logEntries.length} log entries processed`);
+    console.log(`${logEntries.length} log entries processed for sync-sorted-merge`);
   });
 };
 
