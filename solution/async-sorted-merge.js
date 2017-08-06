@@ -5,68 +5,54 @@ const qqsort = require('qqsort');
 
 module.exports = (logSources, printer) => {
   
-  //Gather all Log Entries
+  
   gatherAllLogEntries(logSources)
-    .then((allEntries) => {
-      console.log('allEntries', allEntries);
-      
-      //Sort them.
-      return new Promise( (res, rej) => {
-        qqsort(allEntries, cmp3, (er) => { res(allEntries); });
-      }).then(( sortedEntries ) => {
-        console.log('qqsort promise then', sortedEntries);
-        sortedEntries.forEach( sortedEntry => {
-          printer.print(sortedEntry);
-        });
-      }); //I think this is right.
+    .then(allEntries => {
+      console.log(allEntries)
     })
-    //I think print, once the rest of the code is working.
-    .then( (o) => { console.log('gatherAllLogEntries - final then', o) } )
-    .catch(er => console.error('gatherAllLogEntries - ', er));
-  
-  
+    .catch(er => console.error("Error from gatherAllLogEntries", er));
   
 }
 
-// promise -> allLogEntries
-function gatherAllLogEntries(logSources){
-  const sourcePromises = [];
-  logSources.forEach( logSource1 => {
-    sourcePromises.push( outerGatherLogEntries(logSource1) );
-  });
-  const entries = [], currentSources = [];
-  return Promise.all(sourcePromises)
-    .then( (sourceRes) => {
-      let r = [];
-      sourceRes.forEach( (itm) => { r = r.concat(itm) } );
-      return r;
-    } )
-    .catch( (er) => console.error('gatherAllLogEntries error', er) );
-    
-    //
-    //.then( (result) => [] ); //Eventuall return the list, flattened.
+// -> promise with all flattened log entries.
+let logEntries = [];
+
+// function collect( rslt ) {
+//   logEntries.concat(rslt);
+// }
+
+function allDone( results ) {
+  //We're done if all are false.
+  let i = results.length-1;
+  do {
+    if(results[i] !== false)
+      return false;
+  }while(i--);
+  return true;
 }
 
-function outerGatherLogEntries(logSource) {
-  const accumulatedList = [];
-  const result = gatherLogEntries(logSource);
-  return result;
+function gatherAllLogEntries( logSources ) {
   
-  function gatherLogEntries(logSource) {
-    console.log('gatherLogEntries');
-    const addToList = (logEntry) => {
-      accumulatedList.push(logEntry);
-      gatherLogEntries(logSource); //Call recursivly.
-    };
-    return logSource
-      .popAsync()
-      .then( addToList )
-      .then(() => {
-        console.log('returning accumulatedList');
-        return accumulatedList;
+  return new Promise((res, rej) => {
+    const srcPromise = [];
+  
+    logSources.forEach((src) => {
+      srcPromise.push( src.popAsync() );
+    });
+  
+    //Wait for all to resolve.
+    Promise.all( srcPromise )
+      .then((rslt) => {
+        //if all rslt indicates done...
+        if( allDone(rslt) ) {
+          res(logEntries);
+        } else {
+          gatherAllLogEntries(logSources);
+          logEntries = logEntries.concat(rslt);
+        }
       })
-      .catch( er => { console.error('gatherLogEntries error', er) } );
-  }
+      .catch( (er) => { rej(er); } );
+  });
 }
 
 
@@ -76,42 +62,6 @@ function cmp3(l1,l2) {
   return (e1 < e2) ? -1 : (e1 > e2) ? 1 : 0
 }
 
-/*
-module.exports = (logSources, printer) => {
-  
-  const logEntries = [];
-  const logEntryPromises = [];
-  
-  //logSources itself doesn't have anything special inside of it...
-  let i = 0;
-  function gatherLogEntries(logSource1) {
-    i++;
-    return logSource1
-      .popAsync()
-      .then((entry) => {
-        if(entry) {
-          logEntryPromises.push( gatherLogEntries(logSource1) );
-        }
-        return entry;
-      });
-  }
-  
-  
-  logSources.forEach(function(logSource) {
-    logEntryPromises.push( gatherLogEntries(logSource) );
-    //logSource.popAsync() -> returns a promise that resolves to a log entry or false.
-  });
-  
-  Promise
-    .all(logEntryPromises) //Will be lots.
-    .then( a => {
-      //a would be an array with all of the LogEntries
-      console.log(a.length, i);
-      console.log(a);
-    } );
-  
-}
-*/
 
 /*
 alternativly we can do some sort of accumlating alls where each promise ends in a then with the result and the item.
